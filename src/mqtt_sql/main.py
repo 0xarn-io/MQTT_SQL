@@ -3,12 +3,6 @@ import logging
 import sys
 from contextlib import asynccontextmanager
 
-# Windows: paho-mqtt (under aiomqtt) needs add_reader/add_writer, which the default
-# ProactorEventLoop doesn't implement. Switch to SelectorEventLoop before anything
-# else creates a loop.
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
 from fastapi import FastAPI, Response
 
 from .config import settings
@@ -61,12 +55,21 @@ async def health(response: Response) -> dict:
 def main() -> None:
     import uvicorn
 
-    uvicorn.run(
+    config = uvicorn.Config(
         "mqtt_sql.main:app",
         host=settings.http_host,
         port=settings.http_port,
         log_level=settings.log_level.lower(),
     )
+    server = uvicorn.Server(config)
+
+    # Windows: paho-mqtt (under aiomqtt) needs add_reader/add_writer, which
+    # ProactorEventLoop doesn't implement. uvicorn.run() forces a Proactor policy
+    # on Windows, so drive the server ourselves via asyncio.Runner with an explicit
+    # SelectorEventLoop factory.
+    loop_factory = asyncio.SelectorEventLoop if sys.platform == "win32" else None
+    with asyncio.Runner(loop_factory=loop_factory) as runner:
+        runner.run(server.serve())
 
 
 if __name__ == "__main__":
