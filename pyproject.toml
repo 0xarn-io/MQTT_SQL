@@ -1,0 +1,24 @@
+[project]
+name = "mqtt-sql"
+version = "0.1.0"
+description = "MQTT ingest to MS SQL Server with a FastAPI status endpoint (v0.1 hello-world slice)."
+requires-python = ">=3.11"
+dependencies = [
+    "aiomqtt>=2.3",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "sqlalchemy[asyncio]>=2.0",
+    "aioodbc>=0.5",
+    "pydantic-settings>=2.2",
+    "paho-mqtt>=2.0",
+]
+
+[project.scripts]
+mqtt-sql = "mqtt_sql.main:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
