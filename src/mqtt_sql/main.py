@@ -1,6 +1,13 @@
 import asyncio
 import logging
+import sys
 from contextlib import asynccontextmanager
+
+# Windows: paho-mqtt (under aiomqtt) needs add_reader/add_writer, which the default
+# ProactorEventLoop doesn't implement. Switch to SelectorEventLoop before anything
+# else creates a loop.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from fastapi import FastAPI, Response
 
